@@ -21,6 +21,7 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 LOYALTY_URL = "https://ferriswheelpress.com/pages/loyalty-lounge"
 SPIN_INTERVAL_HOURS = 24.5
 LAST_SPIN_FILE = Path(__file__).parent / "last_spin.json"
+SCREENSHOTS_DIR = Path(__file__).parent / "screenshots"
 
 # Selectors for the spin wheel
 EMAIL_INPUT_SELECTORS = [
@@ -115,6 +116,9 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
     print(f"Starting spin for email: {email}")
     print(f"Navigating to: {LOYALTY_URL}")
 
+    # Ensure screenshots directory exists
+    SCREENSHOTS_DIR.mkdir(exist_ok=True)
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=headless)
         context = browser.new_context(
@@ -129,13 +133,13 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
             print("Page loaded successfully")
 
             if debug:
-                page.screenshot(path="debug_01_page_loaded.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "debug_01_page_loaded.png")
 
             # Wait for the Rivo widget popup to appear
             page.wait_for_timeout(5000)
 
             if debug:
-                page.screenshot(path="debug_02_after_wait.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "debug_02_after_wait.png")
 
             # Step 1a: Close the Rivo modal popup if present (it's inside an iframe!)
             print("Checking for Rivo modal popup (inside iframe)...")
@@ -220,7 +224,7 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
             page.wait_for_timeout(2000)
 
             if debug:
-                page.screenshot(path="debug_03_popup_closed.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "debug_03_popup_closed.png")
 
             # Step 2: Look for the spin wheel email input
             # The wheel appears as the last element after 24 hours
@@ -276,8 +280,8 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
                 except Exception as e:
                     print(f"  Could not dump inputs: {e}")
 
-                page.screenshot(path="wheel_not_available.png", full_page=True)
-                print("Screenshot saved to wheel_not_available.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "wheel_not_available.png", full_page=True)
+                print(f"Screenshot saved to {SCREENSHOTS_DIR / 'wheel_not_available.png'}")
                 print("WHEEL_NOT_AVAILABLE")
                 raise Exception("Spin wheel not available - email input not found (wheel may appear after 24 hours)")
 
@@ -287,7 +291,7 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
             email_input.fill(email)
 
             if debug:
-                page.screenshot(path="debug_04_email_filled.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "debug_04_email_filled.png")
 
             # Step 3: Find and click the spin/submit button
             print("Looking for spin button...")
@@ -328,7 +332,7 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
                 except Exception as e:
                     print(f"  Could not dump buttons: {e}")
 
-                page.screenshot(path="error_no_spin_button.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "error_no_spin_button.png")
                 raise Exception("Could not find spin/submit button")
 
             print("Clicking spin button...")
@@ -338,7 +342,7 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
             page.wait_for_timeout(10000)
 
             if debug:
-                page.screenshot(path="debug_05_after_spin.png")
+                page.screenshot(path=SCREENSHOTS_DIR / "debug_05_after_spin.png")
 
             # Try to capture the result
             print("Looking for spin result...")
@@ -373,8 +377,8 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
                 print(f"SUCCESS: Spin result: {result}")
 
             # Always take a final screenshot
-            page.screenshot(path="spin_result.png")
-            print("Screenshot saved to spin_result.png")
+            page.screenshot(path=SCREENSHOTS_DIR / "spin_result.png")
+            print(f"Screenshot saved to {SCREENSHOTS_DIR / 'spin_result.png'}")
 
             # Pause for inspection if requested
             if pause > 0:
@@ -385,11 +389,11 @@ def perform_spin(email: str, headless: bool = True, debug: bool = False, pause: 
 
         except PlaywrightTimeout as e:
             print(f"Timeout error: {e}")
-            page.screenshot(path="error_timeout.png")
+            page.screenshot(path=SCREENSHOTS_DIR / "error_timeout.png")
             raise
         except Exception as e:
             print(f"Error during spin: {e}")
-            page.screenshot(path="error_unknown.png")
+            page.screenshot(path=SCREENSHOTS_DIR / "error_unknown.png")
             raise
         finally:
             browser.close()

@@ -16,8 +16,5 @@ venv/
 # OS
 .DS_Store
 
-# Debug screenshots
-debug_*.png
-error_*.png
-spin_result.png
-wheel_not_available.png
+# Screenshots
+screenshots/
