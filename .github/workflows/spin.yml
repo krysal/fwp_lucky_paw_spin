@@ -1,0 +1,63 @@
+name: Lucky Paw Spin
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    # Allow manual trigger
+    inputs:
+      force:
+        description: "Force spin regardless of time elapsed"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  spin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Install Playwright browsers
+        run: uv run playwright install chromium --with-deps
+
+      - name: Run spin script
+        id: spin
+        env:
+          FWP_EMAIL: ${{ secrets.FWP_EMAIL }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            uv run python spin.py --force | tee output.txt
+          else
+            uv run python spin.py | tee output.txt
+          fi
+
+          # Check if a spin was performed
+          if grep -q "SPIN_PERFORMED=true" output.txt; then
+            echo "spin_performed=true" >> $GITHUB_OUTPUT
+          else
+            echo "spin_performed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit updated last_spin.json
+        if: steps.spin.outputs.spin_performed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last_spin.json
+          git commit -m "Update last spin time [skip ci]"
+          git push
