@@ -19,7 +19,7 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 
 # Configuration
 LOYALTY_URL = "https://ferriswheelpress.com/pages/loyalty-lounge"
-SPIN_INTERVAL_HOURS = 24.5
+SPIN_INTERVAL_HOURS = 24.25
 LAST_SPIN_FILE = Path(__file__).parent / "last_spin.json"
 SCREENSHOTS_DIR = Path(__file__).parent / "screenshots"
 
