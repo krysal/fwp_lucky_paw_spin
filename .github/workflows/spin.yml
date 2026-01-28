@@ -2,8 +2,8 @@ name: Lucky Paw Spin
 
 on:
   schedule:
-    # Run every 30 minutes
-    - cron: "*/30 * * * *"
+    # Run every 55 minutes
+    - cron: "*,55 * * * *"
   workflow_dispatch:
     # Allow manual trigger
     inputs:
